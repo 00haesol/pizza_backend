@@ -1,4 +1,3 @@
-
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
@@ -54,4 +53,20 @@ app.get("/load", async (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+});
+
+
+app.delete("/reset", async (req, res) => {
+  const { userId } = req.query;
+  if (!userId) {
+    return res.status(400).json({ success: false, message: "userId 누락됨" });
+  }
+
+  try {
+    await Topping.deleteMany({ userId });
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Reset Error:", err);
+    res.status(500).json({ success: false });
+  }
 });
