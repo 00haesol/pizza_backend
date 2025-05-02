@@ -1,10 +1,9 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const dotenv = require('dotenv');
-const Topping = require('./models/Topping');
-const cors = require('cors');
 
-dotenv.config();
+require("dotenv").config();
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const Topping = require("./models/Topping");
 
 const app = express();
 app.use(cors());
@@ -13,48 +12,46 @@ app.use(express.json());
 mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
-}).then(() => console.log("✅ MongoDB connected"))
-  .catch(err => console.error("❌ MongoDB connection error:", err));
+});
 
-// POST /save
-app.post('/save', async (req, res) => {
-  const { toppings } = req.body;
-  if (!Array.isArray(toppings) || toppings.length === 0) {
-    return res.status(400).json({ success: false, message: 'Invalid toppings data' });
-  }
-
-  const userId = toppings[0].userId;
+app.post("/save", async (req, res) => {
   try {
-    await Topping.deleteMany({ userId }); // 기존 데이터 삭제
-    await Topping.insertMany(toppings);   // 새 데이터 저장
+    const { toppings } = req.body;
+    if (!Array.isArray(toppings)) {
+      return res.status(400).json({ success: false, message: "Invalid toppings data" });
+    }
+
+    // 기존 기록 삭제
+    const userId = toppings[0]?.userId;
+    if (userId) {
+      await Topping.deleteMany({ userId });
+    }
+
+    // 새 기록 저장
+    await Topping.insertMany(toppings);
     res.json({ success: true });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: 'Failed to save toppings' });
+    console.error("Save error:", err);
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
 
-// GET /load?userId=steam
-app.get('/load', async (req, res) => {
-  const userId = req.query.userId;
-  if (!userId) {
-    return res.status(400).json({ success: false, message: 'Missing userId' });
-  }
-
+app.get("/load", async (req, res) => {
   try {
-    const toppings = await Topping.find({ userId });
-    res.json(toppings.map(t => ({
-      toppingId: t.toppingId,
-      x: t.x,
-      y: t.y
-    })));
+    const { userId } = req.query;
+    if (!userId) {
+      return res.status(400).json({ success: false, message: "Missing userId" });
+    }
+
+    const data = await Topping.find({ userId });
+    res.json(data);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: 'Failed to load toppings' });
+    console.error("Load error:", err);
+    res.status(500).json({ success: false });
   }
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
