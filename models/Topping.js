@@ -2,8 +2,6 @@
 const mongoose = require("mongoose");
 
 const ToppingSchema = new mongoose.Schema({
-  remainingAmount: Number,
-  dailyAverage: Number,
   userId: String,
   toppingId: String,
   x: Number,
