@@ -15,7 +15,7 @@ mongoose.connect(process.env.MONGODB_URI, {
 
 app.post("/save", async (req, res) => {
   try {
-    const { toppings } = req.body;
+    const { toppings, remainingAmount, dailyAverage } = req.body;
     if (!Array.isArray(toppings)) {
       return res.status(400).json({ success: false, message: "Invalid toppings data" });
     }
@@ -27,7 +27,14 @@ app.post("/save", async (req, res) => {
     }
 
     // 새 기록 저장
-    await Topping.insertMany(toppings);
+    
+    const toppingsWithExtras = toppings.map(t => ({
+      ...t,
+      remainingAmount,
+      dailyAverage
+    }));
+    await Topping.insertMany(toppingsWithExtras);
+    
     res.json({ success: true });
   } catch (err) {
     console.error("Save error:", err);
@@ -43,7 +50,14 @@ app.get("/load", async (req, res) => {
     }
 
     const data = await Topping.find({ userId });
-    res.json(data);
+    
+    const meta = data[0] || {};
+    res.json({
+      toppings: data,
+      remainingAmount: meta.remainingAmount || null,
+      dailyAverage: meta.dailyAverage || null
+    });
+    
   } catch (err) {
     console.error("Load error:", err);
     res.status(500).json({ success: false });
