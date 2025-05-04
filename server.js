@@ -15,7 +15,7 @@ mongoose.connect(process.env.MONGODB_URI, {
 
 app.post("/save", async (req, res) => {
   try {
-    const { toppings, remainingAmount, dailyAverage } = req.body;
+    const { userId } = req.body;
     if (!Array.isArray(toppings)) {
       return res.status(400).json({ success: false, message: "Invalid toppings data" });
     }
